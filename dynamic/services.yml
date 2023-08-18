@@ -1,0 +1,34 @@
+http:
+  serversTransports:
+    insecure:
+      insecureSkipVerify: true
+  middlewares:
+    secure-redirect:
+      redirectScheme:
+        scheme: https
+  {{- $svcs := env "SERVICES_JSON" | fromJson }} 
+  routers:
+  {{- range $k, $v := $svcs }}
+    {{ $k }}-router:
+      rule: Host(`{{ $v.domain }}`){{ if $v.internal }} && ClientIP(`10.0.0.0/8`){{ end }}
+      service: {{ $k }}
+      entrypoints:
+        - web
+      middlewares: 
+        - secure-redirect
+    {{ $k }}-router-https:
+      rule: Host(`{{ $v.domain }}`){{ if $v.internal }} && ClientIP(`10.0.0.0/8`){{ end }}
+      service: {{ $k }}
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: letsencrypt  
+  {{- end }}
+  services:
+  {{- range $k, $v := $svcs }}
+    {{ $k }}:
+      loadbalancer: {{ if $v.insecure }}
+        serversTransport: insecure {{ end }}
+        servers:
+          - url: '{{ if $v.protocol }}{{ $v.protocol }}{{ else }}http{{ end }}://{{ if $v.host }}{{ $v.host }}{{ else }}host.docker.internal{{ end }}{{ if $v.port }}:{{ $v.port }}{{ end }}'
+  {{- end }}

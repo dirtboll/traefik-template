@@ -1,0 +1,22 @@
+global:
+  checkNewVersion: false
+  sendAnonymousUsage: false
+log:
+  level: DEBUG
+accessLog: {}
+entryPoints:
+  web:
+    address: ':80'
+  websecure:
+    address: ':443'
+providers:
+  file:
+    directory: /etc/traefik/dynamic-conf
+  docker: {}
+certificatesResolvers:
+  letsencrypt:
+    acme:
+      email: no-reply@example.com
+      storage: /etc/traefik/acme.json
+      httpChallenge:
+        entryPoint: web

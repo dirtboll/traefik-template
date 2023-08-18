@@ -1,0 +1,26 @@
+version: '3.9'
+
+services:
+  traefik:
+    image: traefik:v3.0.0-beta3
+    restart: always
+    environment:
+      SERVICES_JSON: "${SERVICES_JSON:?Use services.json and start.sh script}"
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+    volumes:
+      - /etc/letsencrypt:/letsencrypt
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./traefik.yml:/etc/traefik/traefik.yml
+      - ./acme.json:/etc/traefik/acme.json
+      - ./dynamic:/etc/traefik/dynamic-conf
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - traefik
+
+networks:
+  traefik:
+    external: true
